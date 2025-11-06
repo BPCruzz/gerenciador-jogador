@@ -1,71 +1,50 @@
 package com.gerenciador.jogador.service;
+
 import com.gerenciador.jogador.model.Jogador;
-import com.gerenciador.jogador.model.Posicao;
 import com.gerenciador.jogador.model.Time;
+import com.gerenciador.jogador.repository.JogadorRepository; // (1) Importamos os repositórios
+import com.gerenciador.jogador.repository.TimeRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-
-
-/*
-Só lembrando que essa classe é responsável pelas regras de negócio.
- */
-
+import java.util.Optional;
+//CLASSE DE REGRAS DE NEGÓCIOS
 @Service
 public class JogadorService {
-    List<Jogador> jogadores = new ArrayList<>();
-    List<Time> times = new ArrayList<>();
 
-    /*
-    Classe teste para adicionar jogador
-     */
+    // Chamamos os repositórios
+    private final JogadorRepository jogadorRepository;
+    private final TimeRepository timeRepository;
 
-
-    public JogadorService(){
-        Time time = new Time(1L, "Cruzeiro", "Mineirão");
-        times.add(time);
-        Jogador j1 = new Jogador(1L, "Bryan", 10, Posicao.ATACANTE, times.getFirst());
-        jogadores.add(j1);
+    // Injeção de Dependência via construtor
+    public JogadorService(JogadorRepository jogadorRepository, TimeRepository timeRepository) {
+        this.jogadorRepository = jogadorRepository;
+        this.timeRepository = timeRepository;
     }
 
-    /*
-    Retornar jogadores listados
+    /**
+     * Busca TODOS os jogadores do BANCO DE DADOS.
      */
-
-
-    public Jogador criarJogador(Jogador novoJogador) {
-        // Simula o "auto_increment" do banco de dados.
-        long proximoId = jogadores.size() + 1L;
-
-        novoJogador.setId(proximoId);
-
-        //Pegando o primeiro time por referencia()
-        novoJogador.setTime(times.getFirst());
-
-        // Adiciona na lista
-        this.jogadores.add(novoJogador);
-
-        return novoJogador;
-    }
-
-
-
-
-
-
-
-
-
-
     public List<Jogador> listarTodos() {
-        return this.jogadores;
+        return jogadorRepository.findAll();
     }
 
+    /**
+     * Cria um novo jogador no BANCO DE DADOS.
+     */
+    public Jogador criarJogador(Jogador novoJogador) {
+
+        // Buscamos o time no banco.
+        // findById retorna um "Optional" que pode ou não ter um time.
+        // .get() pega o time de dentro da caixa.
+        Time timePadrao = timeRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Time padrão (ID 1) não encontrado!"));
+
+        // (Definimos o time no jogador
+        novoJogador.setTime(timePadrao);
 
 
-
-
-
-
+        // Salvamos o jogador no BANCO DE DADOS e retornamos.
+        return jogadorRepository.save(novoJogador);
+    }
 }
