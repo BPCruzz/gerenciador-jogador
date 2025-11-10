@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List; // Vamos retornar uma Lista
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/jogadores")
 public class JogadorController {
 

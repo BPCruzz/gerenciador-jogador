@@ -7,7 +7,6 @@ import com.gerenciador.jogador.repository.TimeRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 //CLASSE DE REGRAS DE NEGÓCIOS
 @Service
 public class JogadorService {
