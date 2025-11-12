@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Jogador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body style="padding: 20px;">
+
+<div class="container">
+    <h1 class="mt-3" id="titulo-pagina">Adicionar Novo Jogador</h1>
+    <hr>
+
+    <form id="form-jogador">
+
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome do Jogador:</label>
+            <input type="text" class="form-control" id="nome" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="numeroCamisa" class="form-label">Número da Camisa:</label>
+            <input type="number" class="form-control" id="numeroCamisa" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="posicao" class="form-label">Posição:</label>
+            <select class="form-select" id="posicao" required>
+                <option value="">Selecione...</option>
+                <option value="GOLEIRO">Goleiro</option>
+                <option value="ZAGUEIRO">Zagueiro</option>
+                <option value="LATERAL">Lateral</option>
+                <option value="VOLANTE">Volante</option>
+                <option value="MEIA">Meia</option>
+                <option value="ATACANTE">Atacante</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="time" class="form-label">Time:</label>
+            <select class="form-select" id="time" required>
+                <option value="">Carregando times...</option>
+            </select>
+        </div>
+
+        <hr>
+        <button type="submit" class="btn btn-success">Salvar Jogador</button>
+        <a href="#" id="link-voltar" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<script>
+    // Função para pegar parâmetros da URL (igual à outra página)
+    function getParametroDaUrl(nome) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(nome);
+    }
+
+    // Função para carregar os times no dropdown
+    async function carregarTimes(timeIdPreSelecionado) {
+        const selectTime = document.getElementById('time');
+
+        try {
+            const response = await fetch('/times'); // Chama GET /times
+            const times = await response.json();
+
+            selectTime.innerHTML = '<option value="">Selecione um time</option>'; // Limpa o "Carregando..."
+
+            // Cria um <option> para cada time
+            times.forEach(time => {
+                const option = document.createElement('option');
+                option.value = time.id;
+                option.textContent = time.nome;
+                selectTime.appendChild(option);
+            });
+
+            // 3. A MÁGICA: Pré-seleciona o time de onde viemos
+            if (timeIdPreSelecionado) {
+                selectTime.value = timeIdPreSelecionado;
+            }
+
+        } catch (error) {
+            console.error("Erro ao carregar times:", error);
+            selectTime.innerHTML = '<option value="">Erro ao carregar times</option>';
+        }
+    }
+
+    // Função para salvar o formulário
+    async function salvarJogador(event) {
+        // Previne o recarregamento da página (comportamento padrão do form)
+        event.preventDefault();
+
+        // 1. Monta o objeto JSON com os dados do formulário
+        const dadosDoJogador = {
+            nome: document.getElementById('nome').value,
+            numeroCamisa: document.getElementById('numeroCamisa').value,
+            posicao: document.getElementById('posicao').value,
+            // 2. IMPORTANTE: O backend espera um *objeto* Time,
+            //    mas nosso service só precisa do ID dentro dele.
+            time: {
+                id: document.getElementById('time').value
+            }
+        };
+
+        console.log("Enviando para o backend:", JSON.stringify(dadosDoJogador));
+
+        // 3. Envia o POST para o backend
+        try {
+            const response = await fetch('/jogadores', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dadosDoJogador),
+            });
+
+            if (response.ok) {
+                alert('Jogador salvo com sucesso!');
+                // 4. Volta para a página de onde viemos
+                window.location.href = document.getElementById('link-voltar').href;
+            } else {
+                alert('Erro ao salvar jogador.');
+            }
+        } catch (error) {
+            console.error("Erro no fetch:", error);
+            alert('Erro de comunicação com o servidor.');
+        }
+    }
+
+    // Função que roda QUANDO A PÁGINA CARREGA
+    window.onload = () => {
+        // 1. Pega os dados da URL (ex: ?timeId=1&timeNome=Cruzeiro)
+        const timeId = getParametroDaUrl('timeId');
+        const timeNome = getParametroDaUrl('timeNome');
+
+        // 2. Configura os links e títulos
+        const linkVoltar = document.getElementById('link-voltar');
+        if (timeId && timeNome) {
+            document.getElementById('titulo-pagina').textContent = `Adicionar Jogador ao ${timeNome}`;
+            // O link "Cancelar" volta para a página daquele time
+            linkVoltar.href = `/jogadores.html?timeId=${timeId}&timeNome=${timeNome}`;
+        } else {
+            // Se viemos de um lugar desconhecido, volta para a home
+            linkVoltar.href = '/';
+        }
+
+        // 3. Chama a função para carregar os times no dropdown
+        carregarTimes(timeId); // Passa o ID para ele ser pré-selecionado
+
+        // 4. "Escuta" o clique no botão Salvar (submit)
+        const form = document.getElementById('form-jogador');
+        form.addEventListener('submit', salvarJogador);
+    };
+</script>
+</body>
+</html>
