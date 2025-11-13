@@ -13,7 +13,14 @@
 
     <h1 class="mt-3">Gerenciar Times</h1>
 
+    <a href="/add-time.html" class="btn btn-success mb-3">
+        Adicionar Novo Time
+    </a>
+
     <hr>
+
+    <div id="area-de-alerta" class="alert alert-danger d-none" role="alert">
+    </div>
 
     <h2>Times Cadastrados:</h2>
     <div id="lista-de-times">
@@ -22,25 +29,21 @@
 
 <script>
     // 3. Esta função busca os dados da nossa API
-
     async function buscarTimes() {
         console.log("Buscando times");
 
-        const response = await fetch('/times'); // Chama o GET /times
+        const response = await fetch('/times');
         const times = await response.json();
 
         console.log("Dados recebidos:", times);
-
-        // 4. Esta função vai construir o HTML da lista
         mostrarTimesNaTela(times);
     }
 
     // 5. Esta função pega os dados (JSON) e transforma em HTML
     function mostrarTimesNaTela(times) {
         const container = document.getElementById('lista-de-times');
-        container.innerHTML = ''; // Limpa a lista antes de adicionar
+        container.innerHTML = '';
 
-        // 6. Cria uma tabela do Bootstrap para ficar bonito
         const table = document.createElement('table');
         table.className = 'table table-striped';
 
@@ -59,19 +62,61 @@
         // 8. Corpo da tabela
         const tbody = document.createElement('tbody');
         times.forEach(time => {
-            // Cria uma linha <tr> para cada time
             const tr = document.createElement('tr');
+
+            // 9. Linha da tabela (com todos os botões)
             tr.innerHTML = `
                 <td>${time.id}</td>
                 <td>${time.nome}</td>
                 <td>${time.nomeEstadio}</td>
-               <td><a href="/jogadores.html?timeId=${time.id}&timeNome=${time.nome}" class="btn btn-info btn-sm">Ver Jogadores</a>
+                <td>
+                    <a href="/jogadores.html?timeId=${time.id}&timeNome=${time.nome}" class="btn btn-info btn-sm">Ver Jogadores</a>
+
+                    <a href="/editar-time.html?id=${time.id}" class="btn btn-warning btn-sm">Editar</a>
+
+                    <button class="btn btn-danger btn-sm" onclick="deletarTime(${time.id})">Excluir</button>
+                </td>
             `;
             tbody.appendChild(tr);
         });
 
         table.appendChild(tbody);
         container.appendChild(table);
+    }
+
+    // Deletar um time (Com o banner de alerta)
+    async function deletarTime(id) {
+
+        const areaAlerta = document.getElementById('area-de-alerta');
+        // Esconde o alerta (caso ele estivesse aparecendo de um erro anterior)
+        areaAlerta.classList.add('d-none');
+
+        if (confirm("Tem certeza que deseja excluir este time?")) {
+            console.log(`Enviando pedido para deletar time ID: ${id}`);
+
+            try {
+                const response = await fetch(`/times/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // SUCESSO
+                    console.log("Time excluído!");
+                    buscarTimes();
+                } else {
+                    // ERRO
+                    console.error("Erro ao excluir time.");
+                    areaAlerta.textContent = "Não foi possível excluir o time. Verifique se ele possui jogadores cadastrados.";
+                    areaAlerta.classList.remove('d-none'); // Mostra o alerta
+
+                }
+            } catch (error) {
+                // ERRO (Falha de rede, etc)
+                console.error("Erro na requisição:", error);
+                areaAlerta.textContent = "Erro de comunicação com o servidor.";
+                areaAlerta.classList.remove('d-none'); // Mostra o alerta
+            }
+        }
     }
 
     // 9. Roda a função de buscar assim que a página carregar

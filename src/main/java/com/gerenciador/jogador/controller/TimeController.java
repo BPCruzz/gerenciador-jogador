@@ -29,4 +29,22 @@ public class TimeController {
     public List<Time> listarTodosTimes() {
         return timeService.listarTodos();
     }
+
+    //Deletar time
+    @DeleteMapping("/{id}")
+    public void deletarTime(@PathVariable Long id) {
+
+        // Apenas chama o service (que agora tem a lógica de segurança)
+        timeService.deletarTime(id);
+    }
+
+    @GetMapping("/{id}")
+    public Time getTimePorId(@PathVariable Long id) {
+        return timeService.getTimePorId(id);
+    }
+
+    @PutMapping("/{id}")
+    public Time atualizarTime(@PathVariable Long id, @RequestBody Time dadosNovos) {
+        return timeService.atualizarTime(id, dadosNovos);
+    }
 }

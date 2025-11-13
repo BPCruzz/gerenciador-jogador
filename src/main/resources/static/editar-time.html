@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Time</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body style="padding: 20px;">
+
+<div class="container">
+    <a href="/times.html">&larr; Voltar para a lista</a>
+
+    <h1 class="mt-3" id="titulo-pagina">Editar Time</h1>
+    <hr>
+
+    <form id="form-time">
+
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome do Time:</label>
+            <input type="text" class="form-control" id="nome" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="nomeEstadio" class="form-label">Nome do Estádio:</label>
+            <input type="text" class="form-control" id="nomeEstadio" required>
+        </div>
+
+        <hr>
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+    </form>
+</div>
+
+<script>
+    // Função para pegar parâmetros da URL
+    function getParametroDaUrl(nome) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(nome);
+    }
+
+    // NOVA FUNÇÃO: Buscar os dados do time e preencher o formulário
+    async function carregarDadosDoTime(id) {
+        try {
+            // 1. Busca o time específico
+            const response = await fetch(`/times/${id}`);
+            if (!response.ok) throw new Error('Time não encontrado');
+
+            const time = await response.json();
+
+            // 2. Preenche os campos do formulário
+            document.getElementById('nome').value = time.nome;
+            document.getElementById('nomeEstadio').value = time.nomeEstadio;
+            document.getElementById('titulo-pagina').textContent = `Editar Time: ${time.nome}`;
+
+        } catch (error) {
+            console.error("Erro ao buscar dados do time:", error);
+            alert(error.message);
+            window.location.href = '/times.html'; // Volta se der erro
+        }
+    }
+
+    // Função para salvar as alterações (PUT)
+    async function salvarAlteracoes(event, timeId) {
+        event.preventDefault();
+
+        const dadosDoTime = {
+            nome: document.getElementById('nome').value,
+            nomeEstadio: document.getElementById('nomeEstadio').value
+        };
+
+        console.log("Enviando (PUT) para o backend:", JSON.stringify(dadosDoTime));
+
+        // 2. Envia o PUT para o backend (note o ID na URL)
+        try {
+            const response = await fetch(`/times/${timeId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dadosDoTime),
+            });
+
+            if (response.ok) {
+                alert('Time atualizado com sucesso!');
+                window.location.href = '/times.html'; // Volta para a lista
+            } else {
+                alert('Erro ao atualizar time.');
+            }
+        } catch (error) {
+            console.error("Erro no fetch (PUT):", error);
+        }
+    }
+
+    // Função que roda QUANDO A PÁGINA CARREGA
+    window.onload = async () => {
+        const timeId = getParametroDaUrl('id');
+
+        if (timeId) {
+            // 1. Busca os dados do time e preenche o form
+            await carregarDadosDoTime(timeId);
+
+            // 2. "Escuta" o clique no botão Salvar
+            const form = document.getElementById('form-time');
+            form.addEventListener('submit', (event) => salvarAlteracoes(event, timeId));
+
+        } else {
+            alert('Erro: ID do time não encontrado na URL.');
+            window.location.href = '/times.html';
+        }
+    };
+</script>
+</body>
+</html>
